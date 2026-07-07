@@ -1,0 +1,1385 @@
+
+<!-- Main dashboard template for the CPU and GPU benchmark explorer. -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>CPU Benchmark Predictor</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        background:
+          radial-gradient(circle at top left, rgba(239, 68, 68, 0.18), transparent 24%),
+          radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.14), transparent 24%),
+          linear-gradient(135deg, #020202 0%, #060606 50%, #0b0b0b 100%);
+        color: #e6e6e6;
+      }
+      .page {
+        position: relative;
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 36px;
+      }
+      .page::before {
+        content: "";
+        position: absolute;
+        inset: -40px -60px auto auto;
+        width: 260px;
+        height: 260px;
+        background: radial-gradient(circle, rgba(239, 68, 68, 0.16), transparent 70%);
+        filter: blur(28px);
+        pointer-events: none;
+        z-index: -1;
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 28px;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 2.4rem;
+        color: #f8fafc;
+      }
+      .header p {
+        color: #9ca3af;
+        font-size: 1rem;
+      }
+      .grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .card {
+        width: 100%;
+        background: linear-gradient(145deg, rgba(14, 14, 14, 0.96) 0%, rgba(8, 8, 8, 0.98) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        box-shadow: 0 18px 46px rgba(0, 0, 0, 0.56), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        padding: 22px;
+        transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+      }
+      .card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(248, 113, 113, 0.4);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.68), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+      .card h2 {
+        margin-top: 0;
+        color: #fafafa;
+        letter-spacing: 0.01em;
+      }
+      .card p {
+        color: #cbd5e1;
+        line-height: 1.65;
+      }
+      label {
+        display: block;
+        margin-bottom: 12px;
+        font-weight: 600;
+        color: #c7c7c7;
+      }
+      input {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.03);
+        color: #e6e6e6;
+        box-sizing: border-box;
+        margin-top: 6px;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+      }
+      input:focus {
+        outline: none;
+        border-color: rgba(248, 113, 113, 0.55);
+        box-shadow: 0 0 0 4px rgba(248, 113, 113, 0.12);
+      }
+      button {
+        border: none;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+        color: #fef2f2;
+        padding: 10px 16px;
+        cursor: pointer;
+        font-weight: 700;
+        margin-top: 10px;
+        letter-spacing: 0.02em;
+        box-shadow: 0 10px 24px rgba(239, 68, 68, 0.22);
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+      }
+      button:hover {
+        background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 12px 28px rgba(239, 68, 68, 0.28);
+      }
+      .status,
+      .result {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 18px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      }
+      .status {
+        border-left: 4px solid #ef4444;
+      }
+      .status p,
+      .result p {
+        margin: 0;
+        line-height: 1.6;
+        color: #bfc6cc;
+      }
+      .section {
+        margin-top: 20px;
+      }
+      .result-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        margin-top: 20px;
+      }
+      .chart-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 18px;
+        margin-top: 22px;
+        align-items: stretch;
+      }
+      .chart-card {
+        background: linear-gradient(145deg, rgba(17, 17, 17, 0.98) 0%, rgba(8, 8, 8, 0.98) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      }
+      .chart-card:hover {
+        border-color: rgba(248, 113, 113, 0.2);
+      }
+      .chart-card h3 {
+        margin-top: 0;
+        margin-bottom: 12px;
+        color: #f8fafc;
+        font-size: 1rem;
+      }
+      .chart-card img {
+        width: 100%;
+        height: auto;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .chart-description {
+        background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025));
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 16px;
+        color: #cbd5e1;
+        line-height: 1.65;
+      }
+      .chart-description strong {
+        display: block;
+        color: #fda4af;
+        margin-bottom: 8px;
+      }
+      .chart-description ul {
+        margin: 12px 0 0 18px;
+        padding: 0;
+        color: #e2e8f0;
+      }
+      .chart-description li {
+        margin-bottom: 6px;
+        line-height: 1.5;
+      }
+      .result-card {
+        background: linear-gradient(135deg, rgba(23, 23, 23, 0.98) 0%, rgba(10, 10, 10, 0.98) 100%);
+        border: 1px solid rgba(248, 113, 113, 0.18);
+        position: relative;
+        overflow: hidden;
+      }
+      .result-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at top right, rgba(107, 114, 128, 0.18), transparent 38%);
+        pointer-events: none;
+      }
+      .result-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .eyebrow {
+        margin: 0 0 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        font-size: 0.75rem;
+        color: #9ca3af;
+      }
+      .result-header h3 {
+        margin: 0;
+        font-size: 1.15rem;
+        color: #f9fafb;
+      }
+      .category-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.22), rgba(185, 28, 28, 0.18));
+        border: 1px solid rgba(248, 113, 113, 0.26);
+        color: #ffe4e6;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .result-table-wrap {
+        margin-top: 10px;
+      }
+      .result-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .result-table th,
+      .result-table td {
+        padding: 12px 10px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .result-table th {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: #9ca3af;
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .result-table td:last-child {
+        font-weight: 700;
+        color: #f8fafc;
+      }
+      .result-table td:first-child {
+        color: #cbd5e1;
+        font-weight: 600;
+        width: 54%;
+      }
+      .result-table td:last-child {
+        color: #f9fafb;
+        font-weight: 700;
+      }
+      .result-table tr:last-child td {
+        border-bottom: none;
+      }
+      .result-table tr:nth-child(even) {
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .result table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .result th,
+      .result td {
+        padding: 12px 10px;
+        text-align: left;
+        color: #e6e6e6;
+        border-bottom: 1px solid #1f1f1f;
+      }
+      .result th {
+        font-weight: 700;
+      }
+      .result tr:nth-child(even) {
+        background: #070707;
+      }
+      footer {
+        margin-top: 30px;
+        text-align: center;
+        color: #8b8f94;
+        font-size: 0.95rem;
+      }
+      code {
+        background: #1f1f1f;
+        color: #e6e6e6;
+        padding: 3px 6px;
+        border-radius: 6px;
+      }
+      .suggestions {
+        background: rgba(7, 7, 7, 0.96);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        max-height: 220px;
+        overflow: auto;
+        margin-top: 6px;
+        border-radius: 10px;
+        position: relative;
+        z-index: 100;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+      }
+      .suggestion-item {
+        padding: 8px 10px;
+        cursor: pointer;
+        color: #e6e6e6;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .suggestion-item:hover {
+        background: rgba(248, 113, 113, 0.14);
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.84);
+        backdrop-filter: blur(10px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        z-index: 2000;
+      }
+      .modal-backdrop.open {
+        display: flex;
+      }
+      .modal-card {
+        width: min(860px, 100%);
+        max-height: 88vh;
+        overflow: auto;
+        background: linear-gradient(145deg, #151515 0%, #060606 100%);
+        border: 1px solid rgba(248, 113, 113, 0.22);
+        border-radius: 24px;
+        box-shadow: 0 24px 90px rgba(0, 0, 0, 0.78);
+        padding: 28px 28px 24px;
+        position: relative;
+      }
+      .modal-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        border-radius: 24px;
+        background: radial-gradient(circle at top right, rgba(248, 113, 113, 0.14), transparent 34%);
+      }
+      .modal-close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        border: none;
+        background: rgba(255, 255, 255, 0.08);
+        color: #e5e7eb;
+        font-size: 1.2rem;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+      .modal-close:hover {
+        background: rgba(248, 113, 113, 0.16);
+        transform: scale(1.05);
+      }
+      .modal-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #f8fafc;
+        margin: 2px 0 6px;
+      }
+      .modal-subtitle {
+        color: #94a3b8;
+        font-size: 0.95rem;
+        margin-bottom: 16px;
+      }
+      .modal-shell {
+        position: relative;
+        z-index: 1;
+      }
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #f8fafc;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .metric-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 12px 14px;
+      }
+      .metric-label {
+        display: block;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: #94a3b8;
+        margin-bottom: 6px;
+      }
+      .metric-value {
+        display: block;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #f8fafc;
+      }
+      .panel-block {
+        margin-top: 12px;
+      }
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .panel-header h3 {
+        margin: 0;
+        color: #f8fafc;
+      }
+      .header-title {
+        margin: 0 0 6px;
+        color: #f8fafc;
+        font-size: 2rem;
+      }
+      .header-subtitle {
+        margin: 0;
+        color: #cbd5e1;
+        font-size: 1rem;
+      }
+      .view-nav {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: 18px 0 8px;
+      }
+      .view-btn {
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.04);
+        color: #f8fafc;
+        padding: 9px 14px;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: background 0.2s ease, border-color 0.2s ease;
+      }
+      .view-btn:hover,
+      .view-btn.active {
+        background: rgba(248, 113, 113, 0.16);
+        border-color: rgba(248, 113, 113, 0.45);
+      }
+      .view-panel {
+        display: none;
+      }
+      .view-panel.active {
+        display: block;
+      }
+      .hero-card {
+        padding: 22px;
+      }
+      .hero-shell {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 18px;
+        align-items: center;
+      }
+      .hero-card h3 {
+        margin: 0 0 10px;
+        color: #f8fafc;
+      }
+      .hero-card p {
+        color: #cbd5e1;
+        margin: 0 0 10px;
+        line-height: 1.6;
+      }
+      .hero-highlights {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 12px;
+        margin-top: 14px;
+      }
+      .hero-visual {
+        position: relative;
+        min-height: 260px;
+        background: linear-gradient(135deg, rgba(248, 113, 113, 0.16), rgba(255, 255, 255, 0.04));
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 22px;
+        padding: 18px;
+        overflow: hidden;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+      .shape {
+        position: absolute;
+        border-radius: 999px;
+        filter: blur(2px);
+        opacity: 0.7;
+      }
+      .shape-one {
+        top: 12px;
+        right: 16px;
+        width: 88px;
+        height: 88px;
+        background: rgba(248, 113, 113, 0.24);
+      }
+      .shape-two {
+        bottom: 18px;
+        left: 18px;
+        width: 110px;
+        height: 110px;
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .hero-illustration {
+        position: relative;
+        z-index: 1;
+        background: rgba(8, 8, 8, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        padding: 14px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .hero-mini-card {
+        position: absolute;
+        right: 16px;
+        bottom: 16px;
+        z-index: 2;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(8px);
+        border-radius: 14px;
+        padding: 10px 12px;
+        color: #f8fafc;
+        font-size: 0.82rem;
+      }
+      .hero-mini-card strong {
+        display: block;
+        color: #fda4af;
+        margin-bottom: 2px;
+      }
+      .hero-highlight {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 12px 14px;
+      }
+      .hero-highlight strong {
+        display: block;
+        color: #fda4af;
+        margin-bottom: 4px;
+      }
+      .section-block {
+        margin-top: 18px;
+      }
+      .section-subheading {
+        margin: 0 0 10px;
+        color: #f8fafc;
+        font-size: 1.05rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+      }
+      .insight-box {
+        margin-top: 12px;
+        padding: 14px 16px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025));
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+      }
+      .insight-box strong {
+        display: block;
+        margin-bottom: 8px;
+        color: #fda4af;
+      }
+      .insight-box ul {
+        margin: 0 0 0 18px;
+        padding: 0;
+        color: #cbd5e1;
+      }
+      .insight-box li {
+        margin-bottom: 6px;
+      }
+      .insight-box {
+        margin-top: 10px;
+        padding: 12px 14px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+      }
+      .insight-box strong {
+        display: block;
+        margin-bottom: 6px;
+        color: #fda4af;
+      }
+      .insight-box ul {
+        margin: 0 0 0 18px;
+        padding: 0;
+        color: #cbd5e1;
+      }
+      .insight-box li {
+        margin-bottom: 6px;
+      }
+      .insight-box {
+        margin-top: 10px;
+        padding: 12px 14px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+      }
+      .insight-box ul {
+        margin: 6px 0 0 18px;
+        padding: 0;
+        color: #cbd5e1;
+      }
+      .insight-box li {
+        margin-bottom: 6px;
+      }
+      .analysis-section-title {
+        margin: 22px 0 6px;
+        color: #f8fafc;
+        font-size: 1.3rem;
+        text-align: center;
+      }
+      .analysis-section-subtitle {
+        margin: 0 0 12px;
+        color: #94a3b8;
+        font-size: 0.95rem;
+        text-align: center;
+      }
+      .table-shell {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="header">
+        <h2 class="header-title">CPU &amp; GPU Benchmark Explorer</h2>
+        <p class="header-subtitle">A compact project for understanding benchmark data, spotting trends, and testing predictive recommendations.</p>
+        <div class="view-nav" role="tablist" aria-label="Page sections">
+          <button type="button" class="view-btn active" data-view="home-view">Home</button>
+          <button type="button" class="view-btn" data-view="data-view">Data Analysis</button>
+          <button type="button" class="view-btn" data-view="benchmark-view">Benchmark Analysis</button>
+        </div>
+      </div>
+
+      <!-- Home section that introduces the project and its key capabilities. -->
+      <div id="home-view" class="view-panel active">
+        <div class="card hero-card">
+          <div class="hero-shell">
+            <div>
+              <h3>Project overview</h3>
+              <p>This project combines CPU and GPU benchmark datasets with lightweight machine-learning predictions and nearest-neighbor recommendations. The home view offers a concise summary, the data analysis view highlights benchmark distributions, and the benchmark analysis view lets you explore predictions and similar hardware matches.</p>
+              <div class="hero-highlights">
+                <div class="hero-highlight"><strong>Data insights</strong>Visual charts for CPU and GPU benchmark patterns.</div>
+                <div class="hero-highlight"><strong>Prediction flow</strong>Estimate scores and category tiers from hardware inputs.</div>
+                <div class="hero-highlight"><strong>Recommendations</strong>Find comparable processors and graphics cards.</div>
+              </div>
+            </div>
+            <div class="hero-visual" aria-hidden="true">
+              <div class="shape shape-one"></div>
+              <div class="shape shape-two"></div>
+              <div class="hero-illustration">
+                <svg width="220" height="180" viewBox="0 0 220 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="34" y="32" width="70" height="92" rx="12" stroke="#F8FAFC" stroke-width="4"/>
+                  <rect x="52" y="48" width="34" height="10" rx="3" fill="#FDA4AF"/>
+                  <rect x="52" y="66" width="34" height="8" rx="3" fill="#E2E8F0"/>
+                  <rect x="52" y="82" width="24" height="8" rx="3" fill="#E2E8F0"/>
+                  <rect x="120" y="40" width="56" height="72" rx="14" stroke="#F8FAFC" stroke-width="4"/>
+                  <rect x="132" y="54" width="32" height="20" rx="6" fill="#FDA4AF"/>
+                  <rect x="132" y="82" width="24" height="8" rx="3" fill="#E2E8F0"/>
+                  <path d="M42 122C58 100 74 96 90 110C106 124 120 132 142 126C160 120 172 104 188 92" stroke="#F87171" stroke-width="4" stroke-linecap="round"/>
+                  <circle cx="90" cy="110" r="5" fill="#F8FAFC"/>
+                  <circle cx="142" cy="126" r="5" fill="#F8FAFC"/>
+                </svg>
+              </div>
+              <div class="hero-mini-card">
+                <strong>Benchmark preview</strong>
+                CPU • GPU • insights
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card section-block">
+          <h3 style="margin-top: 0;">Model accuracy summary</h3>
+          <p>These numbers come from a 20% holdout split on the CPU benchmark data and are shown here to quickly compare the current predictive models.</p>
+          <div class="metric-grid">
+            <div class="metric-card">
+              <span class="metric-label">Linear Regression</span>
+              <span class="metric-value">R² {{ model_metrics.linear_regression.r2 }}</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Linear Regression</span>
+              <span class="metric-value">MAE {{ model_metrics.linear_regression.mae }}</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">KNN classifier</span>
+              <span class="metric-value">Accuracy {{ model_metrics.knn_classifier.accuracy }}</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Decision tree</span>
+              <span class="metric-value">Accuracy {{ model_metrics.decision_tree.accuracy }}</span>
+            </div>
+          </div>
+          <div class="insight-box">
+            <strong>What these metrics mean</strong>
+            <ul>
+              <li>Higher R² means the regression model explains more of the benchmark variation.</li>
+              <li>Lower MAE and RMSE indicate smaller absolute prediction errors.</li>
+              <li>Higher classification accuracy means the category labels are being assigned more reliably.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data analysis section that displays benchmark charts and insights. -->
+      <div id="data-view" class="view-panel">
+        <div class="section-block">
+          <h3 class="analysis-section-title">Data analysis</h3>
+          <p class="analysis-section-subtitle">A polished view of benchmark distributions and category patterns before deeper prediction work.</p>
+          <h3 class="section-subheading">CPU</h3>
+        <div class="chart-grid">
+          {% if cpu_pie_chart %}
+          <div class="chart-card">
+            <h3>CPU category breakdown</h3>
+            <img src="data:image/png;base64,{{ cpu_pie_chart }}" alt="CPU category pie chart">
+          </div>
+          <div class="chart-description">
+            <strong>CPU category breakdown</strong>
+            This chart shows the distribution of CPUs across entry-level, mid-range, and high-end categories, making it easier to spot how the dataset is balanced.
+            <ul>
+              <li>Most CPUs in the dataset fall into the mid-range group.</li>
+              <li>High-end models are fewer but represent the strongest performers.</li>
+              <li>The split highlights whether the dataset leans toward mainstream or premium hardware.</li>
+            </ul>
+          </div>
+          {% endif %}
+          {% if cpu_histogram %}
+          <div class="chart-card">
+            <h3>CPU benchmark histogram</h3>
+            <img src="data:image/png;base64,{{ cpu_histogram }}" alt="CPU benchmark histogram">
+          </div>
+          <div class="chart-description">
+            <strong>CPU benchmark histogram</strong>
+            The histogram highlights the spread of CPU benchmark scores and shows whether the sample is skewed toward lower, average, or higher-performing processors.
+            <ul>
+              <li>The values cluster around a central performance range.</li>
+              <li>A few outliers indicate processors that stand well above the average.</li>
+              <li>This view helps judge whether benchmark scores are balanced or heavily skewed.</li>
+            </ul>
+          </div>
+          {% endif %}
+          {% if cpu_bar_chart %}
+          <div class="chart-card">
+            <h3>Average CPU score by category</h3>
+            <img src="data:image/png;base64,{{ cpu_bar_chart }}" alt="CPU category bar chart">
+          </div>
+          <div class="chart-description">
+            <strong>Average CPU score by category</strong>
+            This bar chart compares the average benchmark score for each CPU category and helps reveal how much performance separates each tier.
+            <ul>
+              <li>Higher categories consistently show stronger average scores.</li>
+              <li>The gap between tiers reflects how clearly performance rises with class.</li>
+              <li>This chart is useful for validating category labels against actual benchmark behavior.</li>
+            </ul>
+          </div>
+          {% endif %}
+          {% if cpu_boxplot %}
+          <div class="chart-card">
+            <h3>Top 12 CPUs by benchmark</h3>
+            <img src="data:image/png;base64,{{ cpu_boxplot }}" alt="Top 12 CPUs">
+          </div>
+          <div class="chart-description">
+            <strong>Top 12 CPUs by benchmark</strong>
+            The ranking view surfaces the strongest processors in the dataset so the dominant performers are easy to identify at a glance.
+            <ul>
+              <li>The leaders are concentrated among the most powerful CPU classes.</li>
+              <li>The rank order reveals which models dominate the benchmark landscape.</li>
+              <li>This makes it easier to compare the best performers against the broader dataset.</li>
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+        <div class="insight-box">
+          <strong>CPU insights</strong>
+          <ul>
+            <li>Higher category CPUs tend to cluster toward stronger benchmark scores.</li>
+            <li>The histogram shows whether the dataset is skewed toward mid-range processors.</li>
+            <li>The top-12 view highlights the leading chips that drive the overall benchmark trend.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <h3 class="section-subheading">GPU</h3>
+        <div class="chart-grid">
+          {% if gpu_pie_chart %}
+          <div class="chart-card">
+            <h3>GPU category breakdown</h3>
+            <img src="data:image/png;base64,{{ gpu_pie_chart }}" alt="GPU category pie chart">
+          </div>
+          <div class="chart-description">
+            <strong>GPU category breakdown</strong>
+            This chart separates GPUs into entry-level, mid-range, and high-end groups, offering a quick view of how the dataset is distributed.
+            <ul>
+              <li>The sample is split across budget, mainstream, and premium GPU segments.</li>
+              <li>Mid-range cards appear to make up a large share of the data.</li>
+              <li>The breakdown helps explain how representative each tier is in the dataset.</li>
+            </ul>
+          </div>
+          {% endif %}
+          {% if gpu_histogram %}
+          <div class="chart-card">
+            <h3>GPU benchmark histogram</h3>
+            <img src="data:image/png;base64,{{ gpu_histogram }}" alt="GPU benchmark histogram">
+          </div>
+          <div class="chart-description">
+            <strong>GPU benchmark histogram</strong>
+            The histogram reveals the concentration of GPU benchmark values and shows whether the cards are clustered around mainstream or premium performance.
+            <ul>
+              <li>GPU scores are centered around a strong mid-range cluster.</li>
+              <li>Higher-performing cards create a visible upper-end tail.</li>
+              <li>This helps show whether the dataset is skewed toward everyday or elite graphics hardware.</li>
+            </ul>
+          </div>
+          {% endif %}
+          {% if gpu_bar_chart %}
+          <div class="chart-card">
+            <h3>Average GPU score by category</h3>
+            <img src="data:image/png;base64,{{ gpu_bar_chart }}" alt="GPU category bar chart">
+          </div>
+          <div class="chart-description">
+            <strong>Average GPU score by category</strong>
+            This bar chart compares average benchmark strength across GPU tiers and emphasizes how sharply performance differs by category.
+            <ul>
+              <li>Each GPU tier shows a noticeably different average performance level.</li>
+              <li>The chart confirms that category labels align with actual benchmark outcomes.</li>
+              <li>It gives a quick summary of how much value separates the tiers.</li>
+            </ul>
+          </div>
+          {% endif %}
+          {% if gpu_boxplot %}
+          <div class="chart-card">
+            <h3>Top 12 GPUs by benchmark</h3>
+            <img src="data:image/png;base64,{{ gpu_boxplot }}" alt="Top 12 GPUs">
+          </div>
+          <div class="chart-description">
+            <strong>Top 12 GPUs by benchmark</strong>
+            The ranking view makes the standout GPU models easy to spot and helps compare them against the rest of the dataset.
+            <ul>
+              <li>Top-ranked GPUs clearly represent the strongest cards in the sample.</li>
+              <li>The list makes it simple to identify the leading models at a glance.</li>
+              <li>This view is helpful for comparing premium cards against the broader field.</li>
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+        <div class="insight-box">
+          <strong>GPU insights</strong>
+          <ul>
+            <li>GPU performance typically separates cleanly by category and price tier.</li>
+            <li>The histogram reveals whether the dataset leans toward mainstream or high-end cards.</li>
+            <li>The top-12 ranking helps identify the standout graphics cards in the selected dataset.</li>
+          </ul>
+        </div>
+      </div>
+
+      </div>
+
+      <!-- Benchmark analysis section with prediction and recommendation forms. -->
+      <div id="benchmark-view" class="view-panel">
+        <div class="section-block">
+          <h3 class="analysis-section-title">Benchmark analysis</h3>
+        <p class="analysis-section-subtitle">A presentation-ready view of CPU and GPU benchmark insights for comparison and prediction.</p>
+        <h3 class="section-subheading">CPU</h3>
+        <div class="grid">
+          <div class="card">
+            <h2>Predict score, category &amp; similar CPUs</h2>
+            <p>Enter the number of cores and TDP to get a benchmark score, performance category, and KNN-based similar CPU list.</p>
+            <form id="predict-form" method="get" action="/predict">
+              <label>
+                Number of cores
+                <input name="cores" type="number" step="1" value="8" required>
+              </label>
+              <label>
+                TDP
+                <input name="tdp" type="number" step="1" value="125" required>
+              </label>
+              <button type="submit">Predict</button>
+            </form>
+          </div>
+
+          <div class="card">
+            <h2>CPU recommender</h2>
+            <p>Search and select a CPU to recommend similar processors.</p>
+            <form id="recommend-form" method="get" action="/api/recommend">
+              <label>
+                Search CPU name
+                <input id="cpu-name-input" name="cpu_name" list="cpu-names" type="text" placeholder="Start typing CPU name..." required>
+                <div id="cpu-suggestions" class="suggestions"></div>
+              </label>
+              <button type="submit">Recommend</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <h3 class="section-subheading">GPU</h3>
+        <div class="grid">
+          <div class="card">
+            <h2>Predict score, category &amp; similar GPUs</h2>
+            <p>Enter the TDP and price to estimate a GPU benchmark score, category, and find comparable GPUs.</p>
+            <form id="gpu-predict-form" method="get" action="/api/gpu/predict">
+              <label>
+                TDP
+                <input name="tdp" type="number" step="1" value="250" required>
+              </label>
+              <label>
+                Price ($)
+                <input name="price" type="number" step="0.01" value="499" required>
+              </label>
+              <button type="submit">Predict GPU</button>
+            </form>
+          </div>
+
+          <div class="card">
+            <h2>GPU recommender</h2>
+            <p>Search and select a GPU to recommend similar graphics cards.</p>
+            <form id="gpu-recommend-form" method="get" action="/api/gpu/recommend">
+              <label>
+                Search GPU name
+                <input id="gpu-name-input" name="gpu_name" list="gpu-names" type="text" placeholder="Start typing GPU name..." required>
+                <div id="gpu-suggestions" class="suggestions"></div>
+              </label>
+              <button type="submit">Recommend GPU</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <div id="status-message" class="section status" style="display:none;">
+        <h3>Status</h3>
+        <p id="status-text"></p>
+      </div>
+
+      <div id="dynamic-result"></div>
+      <div id="recommendation-result"></div>
+
+      <div id="result-modal" class="modal-backdrop" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+          <button type="button" class="modal-close" id="modal-close" aria-label="Close">×</button>
+          <div id="modal-content"></div>
+        </div>
+      </div>
+
+      {% if message %}
+      <div class="section status">
+        <h3>Status</h3>
+        <p>{{ message }}</p>
+      </div>
+      {% endif %}
+
+      {% if result %}
+      <div class="result-stack">
+        <div class="card result-card">
+          <div class="result-header">
+            <div>
+              <p class="eyebrow">Prediction summary</p>
+              <h3>Prediction Result</h3>
+            </div>
+            <span class="category-pill">{{ result.predicted_category }}</span>
+          </div>
+
+          <div class="result-table-wrap">
+            <table class="result-table">
+              <thead>
+                <tr>
+                  <th scope="col">Metric</th>
+                  <th scope="col">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Cores</td>
+                  <td>{{ result.cores }}</td>
+                </tr>
+                <tr>
+                  <td>TDP</td>
+                  <td>{{ result.tdp }} W</td>
+                </tr>
+                <tr>
+                  <td>Predicted cpuMark</td>
+                  <td>{{ result.predicted_cpuMark }}</td>
+                </tr>
+                <tr>
+                  <td>Predicted category</td>
+                  <td>{{ result.predicted_category }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Similar CPUs</h3>
+          {% if result.similar_cpus %}
+          <table>
+            <tr><th>Name</th><th>cpuMark</th><th>Category</th><th>Cores</th><th>TDP</th></tr>
+            {% for cpu in result.similar_cpus %}
+            <tr>
+              <td>{{ cpu.name }}</td>
+              <td>{{ cpu.cpuMark }}</td>
+              <td>{{ cpu.category }}</td>
+              <td>{{ cpu.cores }}</td>
+              <td>{{ cpu.TDP }}</td>
+            </tr>
+            {% endfor %}
+          </table>
+          {% else %}
+          <p>No similar CPUs found for this configuration.</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <footer>
+        API endpoint: <code>GET /predict?cores=&lt;value&gt;&tdp=&lt;value&gt;</code>
+      </footer>
+    </div>
+    <script>
+      // Client-side logic for the interactive benchmark explorer UI.
+      const cpuNames = {{ cpus|map(attribute='name')|list|tojson }};
+      const predictForm = document.getElementById("predict-form");
+      const recommendForm = document.getElementById("recommend-form");
+      const statusMessage = document.getElementById("status-message");
+      const statusText = document.getElementById("status-text");
+      const resultContainer = document.getElementById("dynamic-result");
+      const recommendationContainer = document.getElementById("recommendation-result");
+      const resultModal = document.getElementById("result-modal");
+      const modalContent = document.getElementById("modal-content");
+      const modalClose = document.getElementById("modal-close");
+      const cpuInput = document.getElementById("cpu-name-input");
+      const suggestionsBox = document.getElementById("cpu-suggestions");
+      const gpuPredictForm = document.getElementById("gpu-predict-form");
+      const gpuRecommendForm = document.getElementById("gpu-recommend-form");
+      const gpuInput = document.getElementById("gpu-name-input");
+      const gpuSuggestionsBox = document.getElementById("gpu-suggestions");
+      const gpuNames = {{ gpu_names|default([])|tojson }};
+      const viewButtons = Array.from(document.querySelectorAll('.view-btn'));
+      const viewPanels = Array.from(document.querySelectorAll('.view-panel'));
+
+      // Toggle the visible dashboard section when a navigation button is pressed.
+      function setActiveView(viewId) {
+        viewPanels.forEach(panel => {
+          panel.classList.toggle('active', panel.id === viewId);
+        });
+        viewButtons.forEach(button => {
+          button.classList.toggle('active', button.dataset.view === viewId);
+        });
+      }
+
+      viewButtons.forEach(button => {
+        button.addEventListener('click', () => setActiveView(button.dataset.view));
+      });
+
+      function openResultModal(html) {
+        if (!resultModal || !modalContent) return;
+        modalContent.innerHTML = html;
+        resultModal.classList.add("open");
+        resultModal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeResultModal() {
+        if (!resultModal || !modalContent) return;
+        resultModal.classList.remove("open");
+        resultModal.setAttribute("aria-hidden", "true");
+        modalContent.innerHTML = "";
+        document.body.style.overflow = "";
+      }
+
+      function showSuggestions(query) {
+        if (!suggestionsBox) return;
+        suggestionsBox.innerHTML = "";
+        const q = (query || "").toLowerCase().trim();
+        if (!q) return;
+        const matches = cpuNames.filter(n => n && n.toLowerCase().includes(q)).slice(0, 12);
+        matches.forEach(name => {
+          const div = document.createElement('div');
+          div.className = 'suggestion-item';
+          div.textContent = name;
+          div.addEventListener('mousedown', (e) => { e.preventDefault(); cpuInput.value = name; suggestionsBox.innerHTML = ''; });
+          suggestionsBox.appendChild(div);
+        });
+      }
+
+      function showGpuSuggestions(query) {
+        if (!gpuSuggestionsBox) return;
+        gpuSuggestionsBox.innerHTML = "";
+        const q = (query || "").toLowerCase().trim();
+        if (!q) return;
+        const matches = gpuNames.filter(n => n && n.toLowerCase().includes(q)).slice(0, 12);
+        matches.forEach(name => {
+          const div = document.createElement('div');
+          div.className = 'suggestion-item';
+          div.textContent = name;
+          div.addEventListener('mousedown', (e) => { e.preventDefault(); gpuInput.value = name; gpuSuggestionsBox.innerHTML = ''; });
+          gpuSuggestionsBox.appendChild(div);
+        });
+      }
+
+      if (cpuInput) {
+        cpuInput.addEventListener('input', (e) => showSuggestions(e.target.value));
+        cpuInput.addEventListener('blur', () => setTimeout(() => { if (suggestionsBox) suggestionsBox.innerHTML = ''; }, 150));
+      }
+
+      if (gpuInput) {
+        gpuInput.addEventListener('input', (e) => showGpuSuggestions(e.target.value));
+        gpuInput.addEventListener('blur', () => setTimeout(() => { if (gpuSuggestionsBox) gpuSuggestionsBox.innerHTML = ''; }, 150));
+      }
+
+      if (resultModal) {
+        resultModal.addEventListener('click', (event) => {
+          if (event.target === resultModal) {
+            closeResultModal();
+          }
+        });
+      }
+
+      if (modalClose) {
+        modalClose.addEventListener('click', closeResultModal);
+      }
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          closeResultModal();
+        }
+      });
+
+      function renderSimilarCPUs(cpus) {
+        if (!cpus || cpus.length === 0) {
+          return `<div class="card result-card"><div class="panel-header"><h3>Similar CPUs</h3></div><p>No similar CPUs found for this configuration.</p></div>`;
+        }
+        return `<div class="card result-card"><div class="panel-header"><h3>Similar CPUs</h3><span class="pill">KNN Match</span></div><div class="table-shell"><table class="result-table"><thead><tr><th scope="col">Name</th><th scope="col">cpuMark</th><th scope="col">Category</th><th scope="col">Cores</th><th scope="col">TDP</th></tr></thead><tbody>${cpus.map(cpu => `<tr><td>${cpu.name}</td><td>${cpu.cpuMark}</td><td>${cpu.category}</td><td>${cpu.cores}</td><td>${cpu.TDP}</td></tr>`).join("")}</tbody></table></div></div>`;
+      }
+
+      // Build the modal content that shows a CPU prediction summary.
+      function renderPredictionResult(result) {
+        const category = result.predicted_category;
+        return `<div class="modal-shell">
+          <div class="modal-header">
+            <div>
+              <h3 class="modal-title">CPU Prediction Result</h3>
+              <p class="modal-subtitle">Detailed benchmark insight for the selected CPU configuration.</p>
+            </div>
+            <span class="category-pill">${category}</span>
+          </div>
+          <div class="metric-grid">
+            <div class="metric-card"><span class="metric-label">Cores</span><span class="metric-value">${result.cores}</span></div>
+            <div class="metric-card"><span class="metric-label">TDP</span><span class="metric-value">${result.tdp} W</span></div>
+            <div class="metric-card"><span class="metric-label">Predicted Score</span><span class="metric-value">${Number(result.predicted_cpuMark).toFixed(2)}</span></div>
+            <div class="metric-card"><span class="metric-label">Category</span><span class="metric-value">${category}</span></div>
+          </div>
+          <div class="result-stack">
+            <div class="card result-card">
+              <div class="panel-header">
+                <h3>Prediction Summary</h3>
+                <span class="pill">ML Forecast</span>
+              </div>
+              <div class="table-shell">
+                <table class="result-table">
+                  <thead><tr><th scope="col">Metric</th><th scope="col">Value</th></tr></thead>
+                  <tbody>
+                    <tr><td>Estimated cpuMark</td><td>${Number(result.predicted_cpuMark).toFixed(2)}</td></tr>
+                    <tr><td>Expected tier</td><td>${category}</td></tr>
+                    <tr><td>Input cores</td><td>${result.cores}</td></tr>
+                    <tr><td>Input TDP</td><td>${result.tdp} W</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            ${renderSimilarCPUs(result.similar_cpus)}
+          </div>
+        </div>`;
+      }
+
+      function renderGpuPredictionResult(result) {
+        const category = result.predicted_category === 'Entry-level' ? 'Low-end' : result.predicted_category === 'Mid-range' ? 'Mid-end' : 'High-end';
+        return `<div class="modal-shell">
+          <div class="modal-header">
+            <div>
+              <h3 class="modal-title">GPU Prediction Result</h3>
+              <p class="modal-subtitle">Detailed benchmark insight for the selected GPU configuration.</p>
+            </div>
+            <span class="category-pill">${category}</span>
+          </div>
+          <div class="metric-grid">
+            <div class="metric-card"><span class="metric-label">TDP</span><span class="metric-value">${result.tdp} W</span></div>
+            <div class="metric-card"><span class="metric-label">Price</span><span class="metric-value">$${result.price}</span></div>
+            <div class="metric-card"><span class="metric-label">Predicted Score</span><span class="metric-value">${Number(result.predicted_g3dmark).toFixed(2)}</span></div>
+            <div class="metric-card"><span class="metric-label">Category</span><span class="metric-value">${category}</span></div>
+          </div>
+          <div class="result-stack">
+            <div class="card result-card">
+              <div class="panel-header">
+                <h3>GPU Forecast</h3>
+                <span class="pill">ML Forecast</span>
+              </div>
+              <div class="table-shell">
+                <table class="result-table">
+                  <thead><tr><th scope="col">Metric</th><th scope="col">Value</th></tr></thead>
+                  <tbody>
+                    <tr><td>Estimated G3Dmark</td><td>${Number(result.predicted_g3dmark).toFixed(2)}</td></tr>
+                    <tr><td>Expected tier</td><td>${category}</td></tr>
+                    <tr><td>Input TDP</td><td>${result.tdp} W</td></tr>
+                    <tr><td>Input price</td><td>$${result.price}</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card result-card">
+              <div class="panel-header"><h3>Similar GPUs</h3><span class="pill">KNN Match</span></div>
+              <div class="table-shell"><table class="result-table"><thead><tr><th scope="col">Name</th><th scope="col">Benchmark</th><th scope="col">TDP</th><th scope="col">Price</th></tr></thead><tbody>${result.similar_gpus.map(cpu => `<tr><td>${cpu.name}</td><td>${cpu.G3Dmark}</td><td>${cpu.TDP}</td><td>$${cpu.price}</td></tr>`).join("")}</tbody></table></div>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      function renderGpuRecommendationResult(data) {
+        if (!data || !data.recommended_gpus) {
+          return `<div class="card result-card"><div class="panel-header"><h3>GPU Recommendation</h3></div><p>No recommendation data available.</p></div>`;
+        }
+        const selected = `<div class="card result-card"><div class="panel-header"><h3>Selected GPU</h3><span class="pill">Anchor</span></div><div class="table-shell"><table class="result-table"><thead><tr><th scope="col">Name</th><th scope="col">Benchmark</th><th scope="col">TDP</th><th scope="col">Price</th></tr></thead><tbody><tr><td>${data.selected_gpu.name}</td><td>${data.selected_gpu.G3Dmark}</td><td>${data.selected_gpu.TDP}</td><td>$${data.selected_gpu.price}</td></tr></tbody></table></div></div>`;
+        const recommended = `<div class="card result-card"><div class="panel-header"><h3>Recommended GPUs</h3><span class="pill">Top Matches</span></div><div class="table-shell"><table class="result-table"><thead><tr><th scope="col">Name</th><th scope="col">Benchmark</th><th scope="col">TDP</th><th scope="col">Price</th></tr></thead><tbody>${data.recommended_gpus.map(cpu => `<tr><td>${cpu.name}</td><td>${cpu.G3Dmark}</td><td>${cpu.TDP}</td><td>$${cpu.price}</td></tr>`).join("")}</tbody></table></div></div>`;
+        return `<div class="modal-shell"><div class="modal-header"><div><h3 class="modal-title">GPU Recommendation</h3><p class="modal-subtitle">Similar graphics cards matched to your selected GPU.</p></div><span class="category-pill">KNN</span></div><div class="result-stack">${selected}${recommended}</div></div>`;
+      }
+
+      function renderRecommendationResult(data) {
+        if (!data || !data.recommended_cpus) {
+          return `<div class="card result-card"><div class="panel-header"><h3>Recommendation</h3></div><p>No recommendation data available.</p></div>`;
+        }
+        const selected = `<div class="card result-card"><div class="panel-header"><h3>Selected CPU</h3><span class="pill">Anchor</span></div><div class="table-shell"><table class="result-table"><thead><tr><th scope="col">Name</th><th scope="col">cpuMark</th><th scope="col">Category</th><th scope="col">Cores</th><th scope="col">TDP</th></tr></thead><tbody><tr><td>${data.selected_cpu.name}</td><td>${data.selected_cpu.cpuMark}</td><td>${data.selected_cpu.category}</td><td>${data.selected_cpu.cores}</td><td>${data.selected_cpu.TDP}</td></tr></tbody></table></div></div>`;
+        const recommended = `<div class="card result-card"><div class="panel-header"><h3>Recommended CPUs</h3><span class="pill">Top Matches</span></div><div class="table-shell"><table class="result-table"><thead><tr><th scope="col">Name</th><th scope="col">cpuMark</th><th scope="col">Category</th><th scope="col">Cores</th><th scope="col">TDP</th></tr></thead><tbody>${data.recommended_cpus.map(cpu => `<tr><td>${cpu.name}</td><td>${cpu.cpuMark}</td><td>${cpu.category}</td><td>${cpu.cores}</td><td>${cpu.TDP}</td></tr>`).join("")}</tbody></table></div></div>`;
+        return `<div class="modal-shell"><div class="modal-header"><div><h3 class="modal-title">CPU Recommendation</h3><p class="modal-subtitle">Similar processors matched to your selected CPU.</p></div><span class="category-pill">KNN</span></div><div class="result-stack">${selected}${recommended}</div></div>`;
+      }
+
+      // Submit CPU prediction requests and render the returned result in a modal.
+      async function fetchPrediction(event) {
+        event.preventDefault();
+        resultContainer.innerHTML = "";
+        statusText.textContent = "Predicting...";
+        statusMessage.style.display = "block";
+
+        const formData = new FormData(predictForm);
+        const cores = encodeURIComponent(formData.get("cores"));
+        const tdp = encodeURIComponent(formData.get("tdp"));
+        const url = `/api/predict?cores=${cores}&tdp=${tdp}`;
+
+        try {
+          const response = await fetch(url);
+          const json = await response.json();
+          if (!response.ok) {
+            throw new Error(json.error || "Prediction failed.");
+          }
+          statusText.textContent = "Prediction completed successfully.";
+          recommendationContainer.innerHTML = "";
+          resultContainer.innerHTML = "";
+          openResultModal(renderPredictionResult(json));
+        } catch (error) {
+          statusText.textContent = error.message;
+        }
+      }
+
+      async function fetchRecommendation(event) {
+        event.preventDefault();
+        recommendationContainer.innerHTML = "";
+        statusText.textContent = "Finding similar CPUs...";
+        statusMessage.style.display = "block";
+
+        const formData = new FormData(recommendForm);
+        const cpuName = encodeURIComponent(formData.get("cpu_name"));
+        const url = `/api/recommend?cpu_name=${cpuName}`;
+
+        try {
+          const response = await fetch(url);
+          const json = await response.json();
+          if (!response.ok) {
+            throw new Error(json.error || "Recommendation failed.");
+          }
+          statusText.textContent = `Recommendation for ${json.selected_cpu.name} generated.`;
+          resultContainer.innerHTML = "";
+          recommendationContainer.innerHTML = "";
+          openResultModal(renderRecommendationResult(json));
+        } catch (error) {
+          statusText.textContent = error.message;
+        }
+      }
+
+      async function fetchGpuPrediction(event) {
+        event.preventDefault();
+        statusText.textContent = "Predicting GPU...";
+        statusMessage.style.display = "block";
+        const formData = new FormData(gpuPredictForm);
+        const tdp = encodeURIComponent(formData.get("tdp"));
+        const price = encodeURIComponent(formData.get("price"));
+        const url = `/api/gpu/predict?tdp=${tdp}&price=${price}`;
+        try {
+          const response = await fetch(url);
+          const json = await response.json();
+          if (!response.ok) {
+            throw new Error(json.error || "GPU prediction failed.");
+          }
+          statusText.textContent = "GPU prediction completed successfully.";
+          openResultModal(renderGpuPredictionResult(json));
+        } catch (error) {
+          statusText.textContent = error.message;
+        }
+      }
+
+      async function fetchGpuRecommendation(event) {
+        event.preventDefault();
+        statusText.textContent = "Finding similar GPUs...";
+        statusMessage.style.display = "block";
+        const formData = new FormData(gpuRecommendForm);
+        const gpuName = encodeURIComponent(formData.get("gpu_name"));
+        const url = `/api/gpu/recommend?gpu_name=${gpuName}`;
+        try {
+          const response = await fetch(url);
+          const json = await response.json();
+          if (!response.ok) {
+            throw new Error(json.error || "GPU recommendation failed.");
+          }
+          statusText.textContent = `GPU recommendation for ${json.selected_gpu.name} generated.`;
+          openResultModal(renderGpuRecommendationResult(json));
+        } catch (error) {
+          statusText.textContent = error.message;
+        }
+      }
+
+      if (predictForm) {
+        predictForm.addEventListener("submit", fetchPrediction);
+      }
+      if (recommendForm) {
+        recommendForm.addEventListener("submit", fetchRecommendation);
+      }
+      if (gpuPredictForm) {
+        gpuPredictForm.addEventListener("submit", fetchGpuPrediction);
+      }
+      if (gpuRecommendForm) {
+        gpuRecommendForm.addEventListener("submit", fetchGpuRecommendation);
+      }
+    </script>
+  </body>
+</html>
